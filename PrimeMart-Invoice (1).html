@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRIME MART – Invoice System</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --or:#FF6A00;--or2:#E85D00;--or3:#FF8C38;--bk:#111111;--bk2:#1c1c1c;
+  --wh:#ffffff;--g1:#f7f7f7;--g2:#eeeeee;--g3:#cccccc;--gt:#888888;
+  --sh:0 2px 16px rgba(0,0,0,.10);--sh2:0 6px 32px rgba(255,106,0,.18);
+  --rad:14px;--rad2:9px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:#f0f0f0;color:var(--bk);min-height:100vh;font-size:15px}
+
+/* ─── HEADER ─── */
+.hdr{
+  background:linear-gradient(120deg,#FF6A00 0%,#D95400 45%,#111111 100%);
+  padding:0 28px;height:66px;display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;z-index:200;
+  box-shadow:0 3px 20px rgba(255,106,0,.35)
+}
+.hdr-logo{display:flex;align-items:center;gap:11px}
+.hdr-icon{width:40px;height:40px;background:#fff;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.hdr-icon svg{width:24px;height:24px}
+.hdr-name{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:4px;color:#fff;line-height:1}
+.hdr-sub{font-size:10px;color:rgba(255,255,255,.6);letter-spacing:2px;text-transform:uppercase;font-weight:500}
+.hdr-tag{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);
+  color:#fff;padding:5px 14px;border-radius:50px;font-size:11px;font-weight:600;
+  letter-spacing:.5px;text-transform:uppercase}
+
+/* ─── TABS ─── */
+.tabs{background:var(--bk2);display:flex;padding:0 28px;gap:2px;overflow-x:auto}
+.tab{padding:13px 22px;background:none;border:none;border-bottom:3px solid transparent;
+  color:rgba(255,255,255,.45);font-family:'DM Sans',sans-serif;font-size:12px;
+  font-weight:700;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;
+  transition:all .22s;white-space:nowrap;display:flex;align-items:center;gap:7px}
+.tab:hover{color:rgba(255,255,255,.75)}
+.tab.on{color:var(--or);border-bottom-color:var(--or)}
+
+/* ─── LAYOUT ─── */
+.wrap{max-width:1140px;margin:0 auto;padding:28px 20px}
+.panel{display:none}.panel.on{display:block}
+
+/* ─── SECTION HEADING ─── */
+.sh{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;
+  color:var(--bk);margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.sh::before{content:'';width:5px;height:24px;background:var(--or);border-radius:3px;flex-shrink:0}
+
+/* ─── CARD ─── */
+.card{background:var(--wh);border-radius:var(--rad);box-shadow:var(--sh);padding:24px;margin-bottom:22px}
+.ct{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;
+  color:var(--or);margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.ct::after{content:'';flex:1;height:1px;background:var(--g2)}
+
+/* ─── META GRID ─── */
+.mg{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px}
+.mf label{display:block;font-size:10px;font-weight:800;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--gt);margin-bottom:6px}
+.mv{background:var(--g1);border:1.5px solid var(--g2);border-radius:var(--rad2);
+  padding:11px 14px;font-size:13px;font-weight:700;color:var(--bk);font-family:'DM Sans',monospace}
+.mf input,.mf select{width:100%;border:1.5px solid var(--g2);border-radius:var(--rad2);
+  padding:11px 14px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;
+  color:var(--bk);background:var(--wh);outline:none;transition:border-color .2s}
+.mf input:focus,.mf select:focus{border-color:var(--or);box-shadow:0 0 0 3px rgba(255,106,0,.09)}
+.mf select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%23FF6A00' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px;cursor:pointer}
+
+/* ─── PRODUCT TABLE ─── */
+.ptable-wrap{overflow-x:auto}
+.ptable{width:100%;border-collapse:collapse}
+.ptable thead th{background:var(--bk);color:#fff;padding:10px 14px;text-align:left;
+  font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700}
+.ptable thead th:first-child{border-radius:var(--rad2) 0 0 var(--rad2)}
+.ptable thead th:last-child{border-radius:0 var(--rad2) var(--rad2) 0;width:48px}
+.ptable tbody tr{border-bottom:1px solid var(--g2);transition:background .15s}
+.ptable tbody tr:hover{background:rgba(255,106,0,.03)}
+.ptable tbody tr:nth-child(even){background:#fafafa}
+.ptable tbody td{padding:8px 8px}
+.ptable tbody td:last-child{text-align:center}
+.ptable input{width:100%;border:1.5px solid var(--g2);border-radius:8px;
+  padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--bk);
+  background:var(--wh);outline:none;transition:border-color .2s;font-weight:500}
+.ptable input:focus{border-color:var(--or);box-shadow:0 0 0 3px rgba(255,106,0,.09)}
+.ptable .qty-in{width:90px}
+.ptable select{width:100%;border:1.5px solid var(--g2);border-radius:8px;
+  padding:9px 12px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--bk);
+  background:#fff;outline:none;transition:border-color .2s;font-weight:600;cursor:pointer;
+  appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23FF6A00' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.ptable select:focus{border-color:var(--or);box-shadow:0 0 0 3px rgba(255,106,0,.09)}
+.ptable select.sel-orig{color:#D95400;background-color:rgba(255,106,0,.06);border-color:rgba(255,106,0,.35)}
+.ptable select.sel-copy{color:#333;background-color:#f7f7f7;border-color:#ccc}
+.rmbtn{background:none;border:none;cursor:pointer;color:var(--g3);font-size:18px;
+  padding:4px 6px;border-radius:6px;transition:all .18s;line-height:1}
+.rmbtn:hover{color:#e53935;background:#ffebee}
+.row-num{display:inline-flex;width:24px;height:24px;background:var(--or);color:#fff;
+  border-radius:50%;font-size:11px;font-weight:800;align-items:center;justify-content:center;flex-shrink:0}
+
+/* ─── BUTTONS ─── */
+.abar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:12px 22px;border:none;
+  border-radius:var(--rad2);font-family:'DM Sans',sans-serif;font-size:12px;
+  font-weight:800;letter-spacing:.6px;cursor:pointer;transition:all .2s;
+  text-transform:uppercase;white-space:nowrap}
+.btn-or{background:linear-gradient(135deg,var(--or),var(--or2));color:#fff;box-shadow:0 4px 14px rgba(255,106,0,.35)}
+.btn-or:hover{transform:translateY(-2px);box-shadow:0 7px 22px rgba(255,106,0,.45)}
+.btn-bk{background:var(--bk);color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.btn-bk:hover{background:#2c2c2c;transform:translateY(-2px)}
+.btn-ol{background:var(--wh);color:var(--bk);border:1.5px solid var(--g2)}
+.btn-ol:hover{border-color:var(--or);color:var(--or)}
+.btn-gr{background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;box-shadow:0 4px 14px rgba(46,125,50,.28)}
+.btn-gr:hover{transform:translateY(-2px)}
+.add-row-btn{display:flex;align-items:center;gap:8px;padding:11px 20px;
+  background:transparent;border:2px dashed var(--or);border-radius:var(--rad2);
+  color:var(--or);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:800;
+  letter-spacing:.8px;text-transform:uppercase;cursor:pointer;transition:all .2s;margin-top:14px}
+.add-row-btn:hover{background:rgba(255,106,0,.05);border-style:solid}
+
+/* ─── PREVIEW WRAPPER ─── */
+#prevWrap{display:none;margin-top:4px}
+.prev-outer{background:var(--wh);border-radius:var(--rad);box-shadow:var(--sh2);overflow:hidden;border:1px solid var(--g2)}
+
+/* ════════════════════════════════════════════
+   INVOICE DOCUMENT  –  locked A4 proportions
+   ════════════════════════════════════════════ */
+#invDoc{
+  width:794px;background:#fff;font-family:'DM Sans',sans-serif;
+  margin:0 auto;position:relative;overflow:hidden
+}
+
+/* Header band */
+.id-hdr{
+  background:linear-gradient(115deg,#FF6A00 0%,#D95400 48%,#111111 100%);
+  padding:28px 36px 22px;display:flex;justify-content:space-between;align-items:flex-start
+}
+.id-logo-name{font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:5px;color:#fff;line-height:1}
+.id-logo-sub{font-size:9px;letter-spacing:3px;color:rgba(255,255,255,.55);text-transform:uppercase;font-weight:600;margin-top:3px}
+.id-logo-icon{width:36px;height:36px;background:rgba(255,255,255,.18);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.id-logo-icon svg{width:22px;height:22px}
+.id-right{text-align:right}
+.id-inv-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.55);font-weight:700}
+.id-inv-val{font-size:13px;font-weight:800;color:#fff;margin-bottom:8px;font-family:'DM Sans',monospace}
+.id-inv-type{display:inline-block;padding:3px 12px;border-radius:50px;
+  font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+.id-inv-type.original{background:rgba(255,255,255,.22);color:#fff;border:1px solid rgba(255,255,255,.35)}
+.id-inv-type.copy{background:rgba(0,0,0,.35);color:rgba(255,255,255,.80);border:1px solid rgba(255,255,255,.15)}
+
+/* Accent stripe */
+.id-stripe{height:4px;background:linear-gradient(90deg,#FF6A00,#E85D00,#111111)}
+
+/* Body */
+.id-body{padding:20px 36px 16px}
+
+/* Customer bar */
+.id-cbar{background:#f7f7f7;border-left:4px solid var(--or);
+  padding:11px 18px;border-radius:0 var(--rad2) var(--rad2) 0;margin-bottom:18px;
+  display:flex;align-items:center;gap:20px}
+.id-cbar-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#888;font-weight:700}
+.id-cbar-val{font-size:15px;font-weight:800;color:#111}
+.id-cbar-date{margin-left:auto;text-align:right}
+.id-cbar-date .id-cbar-lbl{margin-bottom:2px}
+.id-cbar-date .id-cbar-val{font-size:12px}
+
+/* Products table inside invoice */
+.id-ptitle{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--or);font-weight:800;margin-bottom:10px}
+.id-table{width:100%;border-collapse:collapse;font-size:12px}
+.id-table thead tr{background:var(--bk)}
+.id-table thead th{padding:9px 14px;text-align:left;color:#fff;
+  font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:800}
+.id-table thead th:first-child{border-radius:6px 0 0 6px;width:36px;text-align:center}
+.id-table thead th:last-child{border-radius:0 6px 6px 0;text-align:center;width:80px}
+.id-table tbody tr{border-bottom:1px solid #eee}
+.id-table tbody tr:nth-child(odd){background:#fafafa}
+.id-table tbody tr:nth-child(even){background:#fff}
+.id-table tbody td{padding:8px 14px;font-weight:500;color:#111;font-size:12px}
+.id-table tbody td:first-child{text-align:center}
+.id-table tbody td:last-child{text-align:center;font-weight:800;color:var(--bk)}
+.id-num-dot{display:inline-flex;width:22px;height:22px;background:var(--or);color:#fff;
+  border-radius:50%;font-size:10px;font-weight:800;align-items:center;justify-content:center}
+.id-pbadge{display:inline-block;padding:2px 10px;border-radius:50px;font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase}
+.id-pbadge.original{background:rgba(255,106,0,.12);color:#D95400;border:1px solid rgba(255,106,0,.28)}
+.id-pbadge.copy{background:rgba(17,17,17,.07);color:#333;border:1px solid rgba(17,17,17,.18)}
+
+/* Footer */
+.id-ftr{background:var(--bk);padding:14px 36px;display:flex;
+  justify-content:space-between;align-items:center}
+.id-ftr-l{font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.5px}
+.id-ftr-m{font-size:11px;color:var(--or);font-weight:800;letter-spacing:.5px}
+.id-ftr-r{font-size:10px;color:rgba(255,255,255,.35)}
+
+/* Watermark-style border for copy */
+.id-copy-stamp{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);
+  font-family:'Bebas Neue',sans-serif;font-size:90px;letter-spacing:20px;
+  color:rgba(17,17,17,.04);pointer-events:none;white-space:nowrap;z-index:0}
+
+/* ─── HISTORY ─── */
+.sbar{display:flex;gap:10px;margin-bottom:18px}
+.sbar input{flex:1;border:1.5px solid var(--g2);border-radius:var(--rad2);
+  padding:11px 16px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;
+  color:var(--bk);transition:border-color .2s}
+.sbar input:focus{border-color:var(--or);box-shadow:0 0 0 3px rgba(255,106,0,.09)}
+.htable-wrap{overflow-x:auto}
+.htable{width:100%;border-collapse:collapse}
+.htable thead th{background:var(--bk);color:#fff;padding:11px 16px;text-align:left;
+  font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700}
+.htable thead th:first-child{border-radius:var(--rad2) 0 0 var(--rad2)}
+.htable thead th:last-child{border-radius:0 var(--rad2) var(--rad2) 0;text-align:center}
+.htable tbody tr{border-bottom:1px solid var(--g2);transition:background .15s;cursor:pointer}
+.htable tbody tr:hover{background:rgba(255,106,0,.04)}
+.htable tbody td{padding:12px 16px;font-size:13px;font-weight:500}
+.hbadge{display:inline-block;padding:3px 11px;border-radius:50px;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+.hbadge.original{background:rgba(255,106,0,.12);color:var(--or2);border:1px solid rgba(255,106,0,.25)}
+.hbadge.copy{background:rgba(17,17,17,.07);color:#333;border:1px solid rgba(17,17,17,.15)}
+.hact{display:flex;gap:6px;justify-content:center}
+.hbtn{padding:6px 12px;border:none;border-radius:7px;font-size:11px;
+  font-family:'DM Sans',sans-serif;font-weight:700;cursor:pointer;transition:all .18s;
+  text-transform:uppercase;letter-spacing:.5px}
+.hbtn-v{background:var(--g1);color:var(--bk)}.hbtn-v:hover{background:var(--bk);color:#fff}
+.hbtn-d{background:#ffebee;color:#e53935}.hbtn-d:hover{background:#e53935;color:#fff}
+.empty{text-align:center;padding:50px 20px;color:var(--gt)}
+.empty .ei{font-size:44px;margin-bottom:10px}
+.empty p{font-size:13px;font-weight:500}
+
+/* ─── TOAST ─── */
+.tc{position:fixed;bottom:22px;right:22px;display:flex;flex-direction:column;gap:8px;z-index:9999}
+.toast{background:var(--bk);color:#fff;padding:12px 20px;border-radius:var(--rad2);
+  font-size:12px;font-weight:600;display:flex;align-items:center;gap:9px;
+  box-shadow:0 6px 24px rgba(0,0,0,.22);animation:tin .3s ease;
+  border-left:4px solid var(--or);max-width:300px}
+.toast.ok{border-left-color:#43a047}.toast.er{border-left-color:#e53935}
+@keyframes tin{from{opacity:0;transform:translateX(36px)}to{opacity:1;transform:none}}
+
+/* ─── SPINNER ─── */
+.spinner-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;
+  display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.spinner-overlay.show{display:flex}
+.spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,.2);
+  border-top-color:var(--or);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner-txt{color:#fff;font-weight:700;font-size:14px;letter-spacing:.5px}
+
+/* ─── PRINT ─── */
+@media print{
+  body>*:not(#printArea){display:none!important}
+  #printArea{display:block!important;position:fixed;top:0;left:0;width:100%;height:100%}
+  #printArea #invDoc{width:100%;max-width:100%;margin:0}
+}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:860px){
+  .mg{grid-template-columns:1fr 1fr}
+  #invDoc{width:100%;max-width:100%}
+  .id-hdr{flex-direction:column;gap:14px;padding:20px}
+  .id-right{text-align:left}
+  .id-body{padding:16px 20px 12px}
+  .id-ftr{flex-direction:column;gap:6px;padding:12px 20px;text-align:center}
+  .id-cbar{flex-wrap:wrap}
+  .id-cbar-date{margin-left:0}
+}
+@media(max-width:600px){
+  .hdr{padding:0 14px;height:58px}
+  .hdr-name{font-size:22px}
+  .tabs{padding:0 14px}
+  .wrap{padding:18px 14px}
+  .mg{grid-template-columns:1fr}
+  .abar{flex-direction:column}
+  .btn{justify-content:center}
+  .hdr-tag{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- SPINNER -->
+<div class="spinner-overlay" id="spinner">
+  <div class="spinner"></div>
+  <div class="spinner-txt">Generating PDF…</div>
+</div>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-logo">
+    <div class="hdr-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="3" width="7" height="7" rx="1.5" fill="#FF6A00"/>
+        <rect x="14" y="3" width="7" height="7" rx="1.5" fill="#111"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5" fill="#111"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="#FF6A00"/>
+      </svg>
+    </div>
+    <div>
+      <div class="hdr-name">PRIME MART</div>
+      <div class="hdr-sub">Invoice Management System</div>
+    </div>
+  </div>
+  <div class="hdr-tag">✦ Pro Invoicing</div>
+</header>
+
+<!-- TABS -->
+<nav class="tabs">
+  <button class="tab on" id="tab-create" onclick="switchTab('create')">📄 Create Invoice</button>
+  <button class="tab" id="tab-history" onclick="switchTab('history')">🗂 Order History</button>
+</nav>
+
+<!-- WRAP -->
+<div class="wrap">
+
+  <!-- ═══ CREATE PANEL ═══ -->
+  <div class="panel on" id="panel-create">
+
+    <!-- Action Bar -->
+    <div class="abar">
+      <button class="btn btn-or" onclick="generateInvoice()">⚡ Generate Invoice</button>
+      <button class="btn btn-gr" onclick="saveInvoice()">💾 Save Invoice</button>
+      <button class="btn btn-bk" onclick="printInvoice()">🖨 Print Invoice</button>
+      <button class="btn btn-ol" onclick="downloadPDF()">⬇ Download PDF</button>
+    </div>
+
+    <!-- Invoice Meta -->
+    <div class="card">
+      <div class="ct">📋 Invoice Details</div>
+      <div class="mg">
+        <div class="mf">
+          <label>Invoice Number</label>
+          <div class="mv" id="dispNum">—</div>
+        </div>
+        <div class="mf">
+          <label>Invoice Date</label>
+          <div class="mv" id="dispDate">—</div>
+        </div>
+        <div class="mf">
+          <label>Customer Name</label>
+          <input type="text" id="custName" placeholder="Enter customer name…"/>
+        </div>
+        <div class="mf">
+          <label>Document Type</label>
+          <select id="docType">
+            <option value="Original">Original</option>
+            <option value="Copy">Copy</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Products -->
+    <div class="card">
+      <div class="ct">📦 Products</div>
+      <div class="ptable-wrap">
+        <table class="ptable" id="prodTable">
+          <thead>
+            <tr>
+              <th style="width:42px">#</th>
+              <th>Product Name</th>
+              <th style="width:110px">Qty</th>
+              <th style="width:130px">Status</th>
+              <th style="width:48px"></th>
+            </tr>
+          </thead>
+          <tbody id="prodBody"></tbody>
+        </table>
+      </div>
+      <button class="add-row-btn" onclick="addRow()">＋ Add Product</button>
+    </div>
+
+    <!-- Invoice Preview -->
+    <div id="prevWrap">
+      <div class="sh">Invoice Preview</div>
+      <div class="prev-outer">
+        <div id="invDoc">
+          <div class="id-copy-stamp" id="copyStamp" style="display:none">COPY</div>
+
+          <!-- Header -->
+          <div class="id-hdr">
+            <div>
+              <div class="id-logo-icon">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="3" width="7" height="7" rx="1.5" fill="rgba(255,255,255,0.9)"/>
+                  <rect x="14" y="3" width="7" height="7" rx="1.5" fill="rgba(255,255,255,0.4)"/>
+                  <rect x="3" y="14" width="7" height="7" rx="1.5" fill="rgba(255,255,255,0.4)"/>
+                  <rect x="14" y="14" width="7" height="7" rx="1.5" fill="rgba(255,255,255,0.9)"/>
+                </svg>
+              </div>
+              <div class="id-logo-name">PRIME MART</div>
+              <div class="id-logo-sub">Your Trusted Marketplace</div>
+            </div>
+            <div class="id-right">
+              <div class="id-inv-label">Invoice Number</div>
+              <div class="id-inv-val" id="pNum">—</div>
+              <div class="id-inv-label">Document Type</div>
+              <div id="pType" class="id-inv-type original">Original</div>
+            </div>
+          </div>
+          <div class="id-stripe"></div>
+
+          <!-- Body -->
+          <div class="id-body">
+            <div class="id-cbar">
+              <div>
+                <div class="id-cbar-lbl">Billed To</div>
+                <div class="id-cbar-val" id="pCust">—</div>
+              </div>
+              <div class="id-cbar-date">
+                <div class="id-cbar-lbl">Invoice Date</div>
+                <div class="id-cbar-val" id="pDate">—</div>
+              </div>
+            </div>
+            <div class="id-ptitle">Product Details</div>
+            <table class="id-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Product Name</th>
+                  <th>Quantity</th>
+                  <th style="text-align:center">Status</th>
+                </tr>
+              </thead>
+              <tbody id="pProdBody"></tbody>
+            </table>
+          </div>
+
+          <!-- Footer -->
+          <div class="id-ftr">
+            <div class="id-ftr-l">PRIME MART · All Rights Reserved</div>
+            <div class="id-ftr-m">Thank You For Your Business!</div>
+            <div class="id-ftr-r">Powered by Prime Mart Invoice System</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /panel-create -->
+
+  <!-- ═══ HISTORY PANEL ═══ -->
+  <div class="panel" id="panel-history">
+    <div class="sh">Order History</div>
+    <div class="card">
+      <div class="sbar">
+        <input type="text" id="searchIn" placeholder="🔍  Search by customer name or invoice number…" oninput="renderHistory()"/>
+      </div>
+      <div class="htable-wrap">
+        <table class="htable">
+          <thead>
+            <tr>
+              <th>Invoice #</th>
+              <th>Date</th>
+              <th>Customer Name</th>
+              <th>Type</th>
+              <th style="text-align:center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<!-- TOAST -->
+<div class="tc" id="tc"></div>
+
+<!-- PRINT AREA (hidden, only for print) -->
+<div id="printArea" style="display:none"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+let rowCount = 0;
+let curInv   = null;
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+(function init(){
+  document.getElementById('dispDate').textContent = fmtDate(new Date());
+  for(let i=0;i<10;i++) addRow();
+})();
+
+// ═══════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════
+function genInvNum(){
+  const n=new Date();
+  const y=n.getFullYear();
+  const m=String(n.getMonth()+1).padStart(2,'0');
+  const d=String(n.getDate()).padStart(2,'0');
+  const r=Math.random().toString(36).substring(2,6).toUpperCase();
+  return `PM-${y}${m}${d}-${r}`;
+}
+
+function fmtDate(d){
+  return d.toLocaleDateString('en-PK',{day:'2-digit',month:'long',year:'numeric'});
+}
+
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg,type=''){
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  const ico=type==='ok'?'✓':type==='er'?'✗':'ℹ';
+  el.innerHTML=`<span>${ico}</span><span>${msg}</span>`;
+  document.getElementById('tc').appendChild(el);
+  setTimeout(()=>el.remove(),3400);
+}
+
+// ═══════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════
+function switchTab(t){
+  ['create','history'].forEach(n=>{
+    document.getElementById('panel-'+n).classList.toggle('on',n===t);
+    document.getElementById('tab-'+n).classList.toggle('on',n===t);
+  });
+  if(t==='history') renderHistory();
+}
+
+// ═══════════════════════════════════════════════════
+//  PRODUCT ROWS
+// ═══════════════════════════════════════════════════
+function addRow(){
+  rowCount++;
+  const id=rowCount;
+  const tr=document.createElement('tr');
+  tr.id=`row-${id}`;
+  tr.innerHTML=`
+    <td><span class="row-num">${id}</span></td>
+    <td><input type="text" id="pn-${id}" placeholder="Product name…"/></td>
+    <td><input type="number" class="qty-in" id="pq-${id}" placeholder="0" min="0"/></td>
+    <td>
+      <select id="ps-${id}" class="sel-orig" onchange="updateSelStyle(this)">
+        <option value="Original">Original</option>
+        <option value="Copy">Copy</option>
+      </select>
+    </td>
+    <td><button class="rmbtn" onclick="removeRow(${id})" title="Remove">✕</button></td>`;
+  document.getElementById('prodBody').appendChild(tr);
+}
+
+function updateSelStyle(sel){
+  sel.className = sel.value === 'Original' ? 'sel-orig' : 'sel-copy';
+}
+
+function removeRow(id){
+  const el=document.getElementById(`row-${id}`);
+  if(el){el.style.opacity='0';el.style.transition='opacity .2s';setTimeout(()=>el.remove(),200);}
+}
+
+function collectRows(){
+  const rows=[];
+  document.querySelectorAll('#prodBody tr').forEach(tr=>{
+    const idPart=tr.id.replace('row-','');
+    const nm=(document.getElementById('pn-'+idPart)?.value||'').trim();
+    const qt=(document.getElementById('pq-'+idPart)?.value||'').trim();
+    const st=document.getElementById('ps-'+idPart)?.value||'Original';
+    if(nm||qt) rows.push({name:nm||'(unnamed)',qty:qt||'—',status:st});
+  });
+  return rows;
+}
+
+// ═══════════════════════════════════════════════════
+//  GENERATE
+// ═══════════════════════════════════════════════════
+function generateInvoice(){
+  const cust=document.getElementById('custName').value.trim();
+  if(!cust){toast('Please enter a customer name.','er');document.getElementById('custName').focus();return;}
+  const prods=collectRows();
+  if(!prods.length){toast('Add at least one product.','er');return;}
+
+  const num  = genInvNum();
+  const date = fmtDate(new Date());
+  const type = document.getElementById('docType').value;
+
+  curInv={num,date,cust,type,prods};
+
+  // Update form display
+  document.getElementById('dispNum').textContent=num;
+  document.getElementById('dispDate').textContent=date;
+
+  // Populate preview
+  document.getElementById('pNum').textContent=num;
+  document.getElementById('pDate').textContent=date;
+  document.getElementById('pCust').textContent=cust;
+
+  const pt=document.getElementById('pType');
+  pt.textContent=type;
+  pt.className='id-inv-type '+(type==='Original'?'original':'copy');
+
+  // Copy stamp
+  const cs=document.getElementById('copyStamp');
+  cs.style.display=(type==='Copy')?'block':'none';
+
+  // Products
+  const pb=document.getElementById('pProdBody');
+  pb.innerHTML='';
+  prods.forEach((p,i)=>{
+    const tr=document.createElement('tr');
+    const badgeCls=(p.status||'Original').toLowerCase()==='original'?'original':'copy';
+    tr.innerHTML=`
+      <td><span class="id-num-dot">${i+1}</span></td>
+      <td>${esc(p.name)}</td>
+      <td>${esc(p.qty)}</td>
+      <td style="text-align:center"><span class="id-pbadge ${badgeCls}">${esc(p.status||'Original')}</span></td>`;
+    pb.appendChild(tr);
+  });
+
+  const pw=document.getElementById('prevWrap');
+  pw.style.display='block';
+  setTimeout(()=>pw.scrollIntoView({behavior:'smooth',block:'start'}),80);
+  toast('Invoice generated!','ok');
+}
+
+// ═══════════════════════════════════════════════════
+//  SAVE
+// ═══════════════════════════════════════════════════
+function saveInvoice(){
+  if(!curInv){toast('Generate an invoice first.','er');return;}
+  let arr=JSON.parse(localStorage.getItem('pm_inv')||'[]');
+  const idx=arr.findIndex(i=>i.num===curInv.num);
+  if(idx>=0){arr[idx]=curInv;toast('Invoice updated.','ok');}
+  else{arr.unshift(curInv);toast('Invoice saved!','ok');}
+  localStorage.setItem('pm_inv',JSON.stringify(arr));
+}
+
+// ═══════════════════════════════════════════════════
+//  PRINT
+// ═══════════════════════════════════════════════════
+function printInvoice(){
+  if(!curInv){toast('Generate an invoice first.','er');return;}
+  const pa=document.getElementById('printArea');
+  pa.innerHTML=document.getElementById('invDoc').outerHTML;
+  pa.style.display='block';
+  window.print();
+  setTimeout(()=>{pa.innerHTML='';pa.style.display='none';},1000);
+}
+
+// ═══════════════════════════════════════════════════
+//  DOWNLOAD PDF  –  single A4 page, colors preserved
+// ═══════════════════════════════════════════════════
+async function downloadPDF(){
+  if(!curInv){toast('Generate an invoice first.','er');return;}
+  document.getElementById('spinner').classList.add('show');
+  try{
+    const {jsPDF}=window.jspdf;
+
+    // A4 dimensions in px at 96dpi: 794 x 1123
+    const A4_W_PX=794;
+    const A4_H_PX=1123;
+
+    const node=document.getElementById('invDoc');
+    const origW=node.style.width;
+    const origMax=node.style.maxWidth;
+
+    // Fix width for capture
+    node.style.width=A4_W_PX+'px';
+    node.style.maxWidth=A4_W_PX+'px';
+
+    // Capture at 2x scale for quality
+    const canvas=await html2canvas(node,{
+      scale:2,
+      useCORS:true,
+      logging:false,
+      backgroundColor:'#ffffff',
+      width:A4_W_PX,
+      windowWidth:A4_W_PX
+    });
+
+    node.style.width=origW;
+    node.style.maxWidth=origMax;
+
+    const imgData=canvas.toDataURL('image/jpeg',0.95);
+
+    // A4 in mm
+    const A4_W_MM=210;
+    const A4_H_MM=297;
+
+    const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+
+    // Calculate rendered height in mm proportionally
+    const capturedH_MM=(canvas.height/2)*(A4_W_MM/A4_W_PX);
+
+    if(capturedH_MM<=A4_H_MM){
+      // Fits in one page — vertically center if short
+      pdf.addImage(imgData,'JPEG',0,0,A4_W_MM,capturedH_MM);
+    } else {
+      // Scale to fit one page exactly
+      pdf.addImage(imgData,'JPEG',0,0,A4_W_MM,A4_H_MM);
+    }
+
+    pdf.save(`PrimeMart-Invoice-${curInv.num}.pdf`);
+    toast('PDF downloaded!','ok');
+  }catch(e){
+    console.error(e);
+    toast('PDF export failed. Please try again.','er');
+  }finally{
+    document.getElementById('spinner').classList.remove('show');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  HISTORY
+// ═══════════════════════════════════════════════════
+function renderHistory(){
+  const q=(document.getElementById('searchIn')?.value||'').toLowerCase().trim();
+  const arr=JSON.parse(localStorage.getItem('pm_inv')||'[]');
+  const list=arr.filter(i=>
+    i.cust.toLowerCase().includes(q)||i.num.toLowerCase().includes(q)
+  );
+  const tb=document.getElementById('histBody');
+  tb.innerHTML='';
+  if(!list.length){
+    tb.innerHTML=`<tr><td colspan="5"><div class="empty"><div class="ei">${q?'🔍':'🗂'}</div><p>${q?'No invoices match your search.':'No saved invoices yet.'}</p></div></td></tr>`;
+    return;
+  }
+  list.forEach(inv=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="font-weight:700;font-family:'DM Sans',monospace;font-size:12px">${esc(inv.num)}</td>
+      <td>${esc(inv.date)}</td>
+      <td style="font-weight:600">${esc(inv.cust)}</td>
+      <td><span class="hbadge ${inv.type.toLowerCase()}">${esc(inv.type)}</span></td>
+      <td><div class="hact">
+        <button class="hbtn hbtn-v" onclick="loadInv('${esc(inv.num)}')">View</button>
+        <button class="hbtn hbtn-d" onclick="delInv('${esc(inv.num)}')">Delete</button>
+      </div></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function loadInv(num){
+  const arr=JSON.parse(localStorage.getItem('pm_inv')||'[]');
+  const inv=arr.find(i=>i.num===num);
+  if(!inv) return;
+
+  switchTab('create');
+  document.getElementById('custName').value=inv.cust;
+  document.getElementById('docType').value=inv.type;
+  document.getElementById('dispNum').textContent=inv.num;
+  document.getElementById('dispDate').textContent=inv.date;
+
+  // Rebuild product rows
+  document.getElementById('prodBody').innerHTML='';
+  rowCount=0;
+  inv.prods.forEach(p=>{
+    addRow();
+    document.getElementById('pn-'+rowCount).value=p.name;
+    document.getElementById('pq-'+rowCount).value=p.qty;
+    const sel=document.getElementById('ps-'+rowCount);
+    if(sel){sel.value=p.status||'Original';updateSelStyle(sel);}
+  });
+
+  curInv=inv;
+
+  // Rebuild preview
+  document.getElementById('pNum').textContent=inv.num;
+  document.getElementById('pDate').textContent=inv.date;
+  document.getElementById('pCust').textContent=inv.cust;
+  const pt=document.getElementById('pType');
+  pt.textContent=inv.type;
+  pt.className='id-inv-type '+(inv.type==='Original'?'original':'copy');
+  document.getElementById('copyStamp').style.display=(inv.type==='Copy')?'block':'none';
+
+  const pb=document.getElementById('pProdBody');
+  pb.innerHTML='';
+  inv.prods.forEach((p,i)=>{
+    const tr=document.createElement('tr');
+    const badgeCls=(p.status||'Original').toLowerCase()==='original'?'original':'copy';
+    tr.innerHTML=`<td><span class="id-num-dot">${i+1}</span></td><td>${esc(p.name)}</td><td>${esc(p.qty)}</td><td style="text-align:center"><span class="id-pbadge ${badgeCls}">${esc(p.status||'Original')}</span></td>`;
+    pb.appendChild(tr);
+  });
+
+  document.getElementById('prevWrap').style.display='block';
+  toast('Invoice loaded!','ok');
+  setTimeout(()=>document.getElementById('prevWrap').scrollIntoView({behavior:'smooth'}),150);
+}
+
+function delInv(num){
+  if(!confirm(`Delete invoice ${num}?`)) return;
+  let arr=JSON.parse(localStorage.getItem('pm_inv')||'[]');
+  arr=arr.filter(i=>i.num!==num);
+  localStorage.setItem('pm_inv',JSON.stringify(arr));
+  renderHistory();
+  toast('Invoice deleted.','er');
+}
+</script>
+</body>
+</html>
